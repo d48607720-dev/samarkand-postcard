@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Открытка для Альбины</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --pink:#ff7aa8; --rose:#d6457f; --blush:#ffe3ee; --lilac:#b9a2ff; --lav:#efe6ff; --cream:#fff9fc; --ink:#4b2a47; --ink2:#7b5577;
+  --font:ui-rounded,"SF Pro Rounded","Nunito","Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;font-family:var(--font);color:var(--ink)}
+body{
+  min-height:100vh;
+  background:linear-gradient(160deg,#ffd6e6 0%,#f1e3ff 55%,#dcefff 100%);
+  background-attachment:fixed;
+  padding:env(safe-area-inset-top) 14px calc(env(safe-area-inset-bottom) + 28px);
+  overflow-x:hidden;
+}
+#app{position:relative;z-index:2;max-width:460px;margin:0 auto;padding-top:20px}
+
+/* плавающие украшения */
+.deco{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.deco span{position:absolute;font-size:22px;opacity:.55;animation:drift 9s ease-in-out infinite}
+.deco span:nth-child(1){left:6%;top:8%}
+.deco span:nth-child(2){left:84%;top:12%;animation-delay:-2s;font-size:18px}
+.deco span:nth-child(3){left:12%;top:38%;animation-delay:-4s;font-size:26px}
+.deco span:nth-child(4){left:88%;top:46%;animation-delay:-1s}
+.deco span:nth-child(5){left:8%;top:72%;animation-delay:-5s;font-size:18px}
+.deco span:nth-child(6){left:80%;top:80%;animation-delay:-3s;font-size:26px}
+.deco span:nth-child(7){left:46%;top:94%;animation-delay:-6s}
+.deco span:nth-child(8){left:52%;top:3%;animation-delay:-7s;font-size:16px}
+@keyframes drift{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-14px) rotate(8deg)}}
+
+h1,h2{font-weight:800;margin:0 0 10px;line-height:1.2;letter-spacing:-.2px;
+  background:linear-gradient(90deg,var(--rose),#a56bff);-webkit-background-clip:text;background-clip:text;color:transparent}
+h1{font-size:30px}
+h2{font-size:24px}
+p{line-height:1.55;margin:0 0 12px}
+.center{text-align:center}
+.muted{color:var(--ink2);font-size:14px}
+.fade{animation:in .4s ease both}
+@keyframes in{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+
+.card{
+  background:rgba(255,255,255,.86);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  border-radius:30px;padding:26px 20px 22px;
+  box-shadow:0 14px 40px rgba(214,69,127,.2), inset 0 0 0 2px rgba(255,255,255,.95);
+}
+.card.warn{box-shadow:0 14px 40px rgba(185,162,255,.35), inset 0 0 0 2px var(--lilac);background:rgba(250,245,255,.92)}
+
+/* кнопки */
+button{font:inherit;color:inherit;cursor:pointer;border:0}
+.btn{display:block;width:100%;padding:15px 18px;border-radius:999px;background:linear-gradient(90deg,var(--pink),#b58cff);color:#fff;font-weight:800;font-size:16px;margin-top:16px;box-shadow:0 8px 20px rgba(255,122,168,.4);transition:transform .1s,opacity .2s}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.4;pointer-events:none;box-shadow:none}
+.btn.ghost{background:transparent;color:var(--rose);box-shadow:inset 0 0 0 2px #ffc2d8;font-weight:700}
+.back{background:none;color:var(--ink2);font-size:14px;padding:2px 0;margin-bottom:10px}
+
+/* конверт */
+.stage{display:flex;flex-direction:column;align-items:center;padding-top:10vh}
+.env{position:relative;width:292px;height:198px;perspective:900px;cursor:pointer}
+.env .back-p{position:absolute;inset:0;background:#ff9cbf;border-radius:14px;box-shadow:0 18px 34px rgba(214,69,127,.35)}
+.env .letter{position:absolute;left:14px;right:14px;top:14px;height:172px;background:var(--cream);border-radius:10px;transition:transform .9s .45s cubic-bezier(.3,.7,.2,1);display:flex;align-items:flex-start;justify-content:center;padding-top:24px;color:var(--rose);font-weight:800;font-size:22px;box-shadow:inset 0 0 0 2px #ffd0e2}
+.env .front{position:absolute;inset:0;border-radius:14px;background:#ffb3cf;clip-path:polygon(0 0,50% 58%,100% 0,100% 100%,0 100%)}
+.env .flap{position:absolute;left:0;right:0;top:0;height:114px;background:#ffc6dc;transform-origin:top;clip-path:polygon(0 0,100% 0,50% 100%);transition:transform .7s ease,background .3s;z-index:3}
+.env .seal{position:absolute;left:50%;top:90px;transform:translateX(-50%);z-index:4;width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#ff6b9a,#c26bff);box-shadow:0 0 0 3px #fff,0 6px 14px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:24px;transition:opacity .3s}
+.env.open .flap{transform:rotateX(180deg);z-index:1;background:#ff9cbf}
+.env.open .seal{opacity:0}
+.env.open .letter{transform:translateY(-78px)}
+.env:not(.open){animation:float 3s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-7px)}}
+.hint{margin-top:38px;color:var(--rose);font-weight:700;font-size:15px}
+
+/* открытка */
+.greet p{font-size:16.5px}
+.sign{text-align:right;margin-top:14px;font-weight:700;color:var(--rose)}
+.petals{text-align:center;font-size:22px;letter-spacing:6px;margin-bottom:10px}
+
+/* вопросы */
+.progress{display:flex;gap:4px;margin:2px 0 16px}
+.progress i{flex:1;height:6px;border-radius:3px;background:#f6d9e6}
+.progress i.on{background:linear-gradient(90deg,var(--pink),var(--lilac))}
+.qcount{font-size:13px;color:var(--ink2);margin-bottom:6px}
+.q{font-size:22px;font-weight:800;line-height:1.3;margin-bottom:6px;color:var(--ink)}
+.sub{font-size:14px;color:var(--ink2);margin-bottom:12px}
+.opt{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:13px 15px;margin-top:9px;border-radius:20px;background:#fff;box-shadow:inset 0 0 0 2px #ffd9e7;font-size:16px;transition:background .15s,box-shadow .15s,transform .1s}
+.opt:active{transform:scale(.985)}
+.opt .mk{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 2px #ffb6d0;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff}
+.opt.multi .mk{border-radius:8px}
+.opt.sel{background:var(--blush);box-shadow:inset 0 0 0 2px var(--pink)}
+.opt.sel .mk{background:var(--pink);box-shadow:none}
+.opt.sel .mk::after{content:"♥"}
+textarea,input[type=text],input[type=time]{width:100%;margin-top:10px;padding:13px 16px;border-radius:20px;border:0;box-shadow:inset 0 0 0 2px #ffd9e7;background:#fff;color:var(--ink);font:inherit;font-size:16px}
+textarea{min-height:96px;resize:vertical}
+textarea:focus,input:focus{outline:2px solid var(--pink);outline-offset:1px}
+.warn ul{padding-left:18px;margin:10px 0}
+.warn li{margin-bottom:8px;line-height:1.5}
+
+/* календарь */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin:8px 0}
+.cal-head button{background:var(--blush);border-radius:50%;width:38px;height:38px;font-size:18px;color:var(--rose)}
+.cal-head b{font-size:19px;text-transform:capitalize;color:var(--rose)}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.grid .dn{text-align:center;font-size:12px;color:var(--ink2);padding:4px 0}
+.day{aspect-ratio:1;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1.5px #ffe0ec;font-size:15px;color:var(--ink)}
+.day[disabled]{opacity:.25;pointer-events:none}
+.day.sel{background:linear-gradient(135deg,var(--pink),#b58cff);color:#fff;font-weight:800;box-shadow:0 4px 10px rgba(255,122,168,.45)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{padding:10px 15px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 2px #ffd9e7;font-size:15px;color:var(--ink)}
+.chip.sel{background:linear-gradient(90deg,var(--pink),#b58cff);color:#fff;font-weight:800;box-shadow:none}
+.label{margin-top:18px;font-weight:800;color:var(--rose)}
+.summary{margin-top:14px;padding:12px 14px;border-radius:18px;background:var(--lav);font-size:15px}
+.big{font-size:56px;margin:4px 0 10px;text-align:center}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="deco"><span>🌸</span><span>✨</span><span>💗</span><span>🦋</span><span>🌷</span><span>✨</span><span>💫</span><span>🌸</span></div>
+<div id="app"></div>
+
+<script>
+/* ================= НАСТРОЙКИ (меняй тут) ================= */
+// Места Самарканда. Проверь актуальность на Google Maps и поправь под себя.
+const PARKS = [
+  'Регистан и площадь вокруг',
+  'Гур-Эмир (мавзолей Тимура)',
+  'Шахи-Зинда',
+  'Мечеть Биби-Ханум',
+  'Базар Сиаб',
+  'Пешеходная улица возле Регистана',
+  'Обсерватория Улугбека',
+  'Городской бульвар и парк',
+  'Конигиль (бумажная фабрика)',
+  'Афросиаб (холм и музей)',
+  'Вечный город (Eternal City)'
+];
+const CAFES = [
+  'Platan Restaurant',
+  'Karimbek',
+  'Чайхана Биби-Ханум',
+  'Samarkand Restaurant',
+  'Уютная кофейня в центре',
+  'Чайхана в старом городе',
+  'Кондитерская / десерты'
+];
+
+/* ================= ВОПРОСЫ ================= */
+// Часть 1: общие, не слишком личные
+const QUIZ1 = [
+  {q:'Какое у тебя сейчас настроение?', type:'choice', o:['Отличное ✨','Спокойное','Немного усталое','Хочется приключений']},
+  {q:'Ты больше жаворонок или сова?', type:'choice', o:['Жаворонок','Сова','По настроению']},
+  {q:'Любимое время года?', type:'choice', o:['Весна 🌸','Лето ☀️','Осень 🍂','Зима ❄️']},
+  {q:'Чай, кофе или что-то другое?', type:'choice', o:['Чай','Кофе','Какао','Лимонад или фреш','Просто вода']},
+  {q:'Какая музыка тебя заряжает?', sub:'Можно выбрать несколько', type:'multi', o:['Поп','Рэп и хип-хоп','Восточная и узбекская','Спокойная, lofi','Рок','Что угодно, лишь бы хорошая']},
+  {q:'Идеальный отдых для тебя?', type:'choice', o:['Горы','Море','Старинный город','Лес и природа','Дома с книгой или сериалом']},
+  {q:'Чем ты любишь заниматься в свободное время?', sub:'Можно выбрать несколько', type:'multi', o:['Смотреть кино и сериалы','Читать','Творчество и рисование','Гулять','Спорт','Фотографировать','Готовить','Болтать с друзьями']},
+  {q:'Сладкое или солёное?', type:'choice', o:['Сладкое','Солёное','И то и другое']},
+  {q:'Какие фильмы ты любишь?', sub:'Можно выбрать несколько', type:'multi', o:['Комедии','Романтика','Фэнтези','Аниме и дорамы','Ужасы','Документальные']},
+  {q:'Какой цвет тебе ближе всего?', type:'choice', o:['Розовый 🩷','Голубой 🩵','Фиолетовый 💜','Чёрный 🖤','Зелёный 💚','Жёлтый 💛']}
+];
+
+// Часть 2 (после предупреждения): личные
+const QUIZ2 = [
+  {q:'Что для тебя важнее всего в людях?', sub:'Можно выбрать несколько', type:'multi', o:['Доброта','Чувство юмора','Честность','Ум','Надёжность','Умение слушать','Забота']},
+  {q:'Что больше всего радует тебя в обычный день?', type:'choice', o:['Вкусная еда','Хорошая музыка','Общение с близкими','Когда всё получается','Тишина и уют']},
+  {q:'О чём ты мечтаешь?', sub:'Про себя, про жизнь, про что угодно. Необязательно', type:'text', ph:'Можно коротко', optional:true},
+  {q:'Что быстрее всего тебя расстраивает?', sub:'Можно выбрать несколько', type:'multi', o:['Враньё','Грубость','Опоздания','Шум и суета','Когда игнорируют','Когда давят']},
+  {q:'Как ты относишься к сюрпризам?', type:'choice', o:['Обожаю 💝','Люблю, но небольшие','Лучше предупреждать','Не очень']},
+  {q:'Как тебе проще узнавать человека ближе?', type:'choice', o:['В переписке','На прогулке','За чаем в кафе','В компании друзей','Мне нужно время']},
+  {q:'Что значит «комфортно рядом с человеком»?', sub:'Можно выбрать несколько', type:'multi', o:['Можно быть собой','Не нужно ничего доказывать','Весело','Спокойно','Чувствую себя в безопасности']},
+  {q:'Какое первое впечатление произвёл на тебя Давид?', type:'choice', o:['Тихий и серьёзный','Весёлый и общительный','Загадочный','Честно, уже не помню 😄']},
+  {q:'Что в Давиде тебе нравится?', sub:'Можно выбрать несколько', type:'multi', o:['Чувство юмора','Доброта','Ум','Спокойствие','Что он увлечённый','Честность','Пока не разобралась 😄']},
+  {q:'Как бы ты назвала то, что между вами сейчас?', sub:'Любой ответ нормальный', type:'choice', o:['Мы одноклассники','Мы друзья','Хорошие знакомые','Пока не определила']}
+];
+
+// Часть 3: куда бы она пошла (5 вопросов)
+const QUIZ3 = [
+  {q:'Давид хочет позвать тебя прогуляться по Самарканду. Что скажешь?', type:'choice', o:['С радостью 😊','Интересно, расскажи подробнее','Хочу подумать','Пока не готова']},
+  {q:'Какие места тебе хотелось бы увидеть?', sub:'Выбери любые или впиши своё', type:'multi', o:PARKS, other:'Своё место (по желанию)'},
+  {q:'Где бы посидели с чаем или ужином?', sub:'Кафе и рестораны Самарканда', type:'multi', o:CAFES, other:'Другое место (по желанию)'},
+  {q:'Когда и на сколько тебе удобно?', type:'choice', o:['Утром в выходной, пару часов','Днём, пару часов','На закате, около часа','Вечером, пока не поздно','Полдня, не спеша']},
+  {q:'Что нужно, чтобы тебе было спокойно и комфортно?', type:'multi', o:['Людное, светлое место','Без спешки','Не слишком шумно','Вернуться не поздно','Чтобы я могла уйти, когда захочу'], other:'Ещё что-то, что стоит учесть (по желанию)'}
+];
+const QUIZZES = {1:QUIZ1, 2:QUIZ2, 3:QUIZ3};
+
+/* ================= ЛОГИКА ================= */
+const tg = window.Telegram && Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); try{tg.setHeaderColor('#ffd6e6');tg.setBackgroundColor('#f1e3ff');}catch(e){} }
+const initData = tg ? tg.initData : '';
+const app = document.getElementById('app');
+const S = { i:0, a1:[], a2:[], a3:[], o1:{}, o2:{}, o3:{}, remaining:0, month:null, date:null, time:null, comment:'' };
+
+async function api(p, body){
+  try{
+    const r = await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,...body})});
+    const j = await r.json().catch(()=>({}));
+    return {status:r.status,...j};
+  }catch(e){ return {status:0,error:'network'}; }
+}
+const buzz = (t='light') => { try{ tg.HapticFeedback.impactOccurred(t);}catch(e){} };
+const E = s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function view(html){ app.innerHTML = `<div class="fade">${html}</div>`; window.scrollTo(0,0); }
+const msg=(t,p)=>`<div style="padding-top:12vh"><div class="card center"><div class="big">🌷</div><h2>${t}</h2><p class="muted">${p}</p></div></div>`;
+
+async function boot(){
+  view('<p class="center muted" style="padding-top:30vh">Загружаю…</p>');
+  const r = await api('/api/status',{});
+  if (r.status===401) return view(msg('Открой через Telegram','Эта открытка работает только внутри бота в Telegram.'));
+  if (r.status===403) return view(msg('Открытка личная','Она создана для одного человека.'));
+  if (r.status!==200) return view(msg('Не получилось загрузиться','Проверь интернет и открой открытку ещё раз.'));
+  S.remaining = r.remaining;
+  if (S.remaining<=0) return view(msg('Попытки закончились','Ты уже использовала обе попытки. Давид получил твои ответы 💫'));
+  envelope();
+}
+
+function envelope(){
+  view(`<div class="stage">
+    <div class="env" id="env"><div class="back-p"></div><div class="letter">Для Альбины</div><div class="front"></div><div class="flap"></div><div class="seal">💖</div></div>
+    <p class="hint">Нажми на конверт</p></div>`);
+  const env = document.getElementById('env');
+  env.onclick = ()=>{ buzz('medium'); env.classList.add('open'); setTimeout(greeting,1700); };
+}
+
+function greeting(){
+  view(`<div style="padding-top:4vh"><div class="card greet">
+    <div class="petals">🌸 ✨ 🌸</div>
+    <h1 class="center">Привет, Альбина!</h1>
+    <p>Это Давид. Я решил сделать для тебя маленькую открытку.</p>
+    <p>Сначала будут лёгкие вопросы, чтобы лучше узнать тебя. Потом небольшое предупреждение, а после него вопросы чуть личнее и про одну прогулку по Самарканду.</p>
+    <p>Никакого давления: отвечай, как чувствуешь, любой ответ нормальный.</p>
+    <p class="sign">С теплом, Давид 💗</p>
+    <button class="btn" id="go">Начать</button>
+  </div></div>`);
+  document.getElementById('go').onclick=()=>{ S.i=0; showQ(1); };
+}
+
+function showQ(part){
+  const list = QUIZZES[part], q = list[S.i];
+  const store = S['a'+part], oth = S['o'+part];
+  const cur = store[S.i];
+  const bars = list.map((_,k)=>`<i class="${k<=S.i?'on':''}"></i>`).join('');
+  let body='';
+  if (q.type==='text'){
+    body = `<textarea id="txt" placeholder="${E(q.ph||'')}" maxlength="400">${E(cur||'')}</textarea>`;
+  } else {
+    body = q.o.map((t,k)=>{
+      const sel = q.type==='multi' ? (cur||[]).includes(t) : cur===t;
+      return `<button class="opt ${q.type==='multi'?'multi':''} ${sel?'sel':''}" data-k="${k}"><span class="mk"></span>${E(t)}</button>`;
+    }).join('');
+    if (q.other) body += `<input type="text" id="oth" maxlength="120" placeholder="${E(q.other)}" value="${E(oth[S.i]||'')}">`;
+  }
+  const needBtn = q.type!=='choice';
+  view(`<div class="card">
+    <button class="back" id="bk">← Назад</button>
+    <div class="progress">${bars}</div>
+    <div class="qcount">Вопрос ${S.i+1} из ${list.length}</div>
+    <div class="q">${E(q.q)}</div>
+    ${q.sub?`<div class="sub">${E(q.sub)}</div>`:'<div style="height:6px"></div>'}
+    ${body}
+    ${needBtn?`<button class="btn" id="nx">Дальше</button>`:''}
+  </div>`);
+
+  document.getElementById('bk').onclick=()=>{
+    if (S.i>0){S.i--;showQ(part);}
+    else if (part===1) greeting();
+    else if (part===2) disclaimer();
+    else { S.i=QUIZ2.length-1; showQ(2); }
+  };
+  const next=()=>{
+    buzz();
+    if (S.i<list.length-1){S.i++;showQ(part);}
+    else if (part===1) disclaimer();
+    else if (part===2) { S.i=0; showQ(3); }
+    else calendar();
+  };
+  if (q.type==='choice'){
+    app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ store[S.i]=q.o[+b.dataset.k]; app.querySelectorAll('.opt').forEach(x=>x.classList.toggle('sel',x===b)); setTimeout(next,220); });
+  } else if (q.type==='multi'){
+    app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+      const t=q.o[+b.dataset.k]; const a=store[S.i]||(store[S.i]=[]);
+      const ix=a.indexOf(t); ix>=0?a.splice(ix,1):a.push(t); b.classList.toggle('sel'); buzz();
+    });
+    const o=document.getElementById('oth'); if(o) o.oninput=()=>oth[S.i]=o.value;
+    document.getElementById('nx').onclick=next;
+  } else {
+    const t=document.getElementById('txt');
+    const setBtn=()=>{ document.getElementById('nx').disabled = !q.optional && !t.value.trim(); };
+    t.oninput=()=>{store[S.i]=t.value; setBtn();};
+    setBtn();
+    document.getElementById('nx').onclick=next;
+  }
+}
+
+function disclaimer(){
+  view(`<div class="card warn">
+    <div class="petals">🌷</div>
+    <h2 class="center">Небольшое предупреждение</h2>
+    <p>Дальше вопросы станут чуть личнее, потом будет 5 вопросов про возможную прогулку по Самарканду вместе с Давидом, а затем календарь.</p>
+    <ul>
+      <li>Ты ничем не обязана. Можно ответить «пока не знаю» или остановиться.</li>
+      <li>Ответы придут только Давиду, он никому их не покажет. Если ты решишь остановиться, он тоже узнает об этом.</li>
+      <li>Отвечай честно, так выйдет лучше для вас обоих.</li>
+      <li>Пройти открытку до конца можно только 2 раза.</li>
+    </ul>
+    <button class="btn" id="ok">Поняла, продолжаем</button>
+    <button class="btn ghost" id="no">Я пока не хочу продолжать</button>
+  </div>`);
+  document.getElementById('ok').onclick=()=>{S.i=0;showQ(2);};
+  document.getElementById('no').onclick=async()=>{
+    await api('/api/decline',{});
+    view(msg('Всё в порядке','Спасибо, что дошла до этого места. Никаких обязательств, правда.'));
+  };
+}
+
+const TIMES=['10:00','12:00','14:00','16:00','17:30','19:00','20:00'];
+const MONTHS=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+function calendar(){
+  if(!S.month){const n=new Date();S.month=new Date(n.getFullYear(),n.getMonth(),1);}
+  const today=new Date();today.setHours(0,0,0,0);
+  const max=new Date(today);max.setDate(max.getDate()+60);
+  const m=S.month, y=m.getFullYear(), mo=m.getMonth();
+  const first=(new Date(y,mo,1).getDay()+6)%7, dim=new Date(y,mo+1,0).getDate();
+  let cells=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=>`<div class="dn">${d}</div>`).join('');
+  for(let k=0;k<first;k++)cells+='<div></div>';
+  for(let d=1;d<=dim;d++){
+    const dt=new Date(y,mo,d), key=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const off=dt<today||dt>max;
+    cells+=`<button class="day ${S.date===key?'sel':''}" data-d="${key}" ${off?'disabled':''}>${d}</button>`;
+  }
+  const custom = S.time && !TIMES.includes(S.time);
+  view(`<div class="card">
+    <button class="back" id="bk">← Назад</button>
+    <h2>Выбери день и время 🗓️</h2>
+    <p class="muted">Когда тебе было бы удобно погулять?</p>
+    <div class="cal-head"><button id="pv">‹</button><b>${MONTHS[mo]} ${y}</b><button id="nx2">›</button></div>
+    <div class="grid">${cells}</div>
+    <div class="label">Время</div>
+    <div class="chips">${TIMES.map(t=>`<button class="chip ${S.time===t?'sel':''}" data-t="${t}">${t}</button>`).join('')}</div>
+    <input type="time" id="ct" value="${custom?S.time:''}" aria-label="Своё время">
+    <div class="label">Комментарий</div>
+    <textarea id="cm" maxlength="500" placeholder="Что хочешь добавить? Пожелания, идеи, вопросы к Давиду">${E(S.comment)}</textarea>
+    <div class="summary" id="sm" style="display:none"></div>
+    <button class="btn" id="send">Отправить Давиду 💌</button>
+  </div>`);
+
+  const upd=()=>{
+    const sm=document.getElementById('sm');
+    if(S.date&&S.time){sm.style.display='block';sm.textContent='Выбрано: '+dateLabel()+', '+S.time;}else sm.style.display='none';
+    document.getElementById('send').disabled=!(S.date&&S.time);
+  };
+  upd();
+  const keep=()=>{S.comment=document.getElementById('cm').value;};
+  document.getElementById('bk').onclick=()=>{keep();S.i=QUIZ3.length-1;showQ(3);};
+  document.getElementById('pv').onclick=()=>{keep();S.month=new Date(y,mo-1,1);calendar();};
+  document.getElementById('nx2').onclick=()=>{keep();S.month=new Date(y,mo+1,1);calendar();};
+  app.querySelectorAll('.day').forEach(b=>b.onclick=()=>{S.date=b.dataset.d;app.querySelectorAll('.day').forEach(x=>x.classList.toggle('sel',x===b));buzz();upd();});
+  app.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{S.time=b.dataset.t;document.getElementById('ct').value='';app.querySelectorAll('.chip').forEach(x=>x.classList.toggle('sel',x===b));buzz();upd();});
+  document.getElementById('ct').onchange=e=>{S.time=e.target.value||null;app.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));upd();};
+  document.getElementById('cm').oninput=keep;
+  document.getElementById('send').onclick=submit;
+}
+function dateLabel(){
+  const [y,m,d]=S.date.split('-').map(Number);
+  return new Date(y,m-1,d).toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
+}
+
+function fmt(i,part){
+  let v=S['a'+part][i];
+  v=Array.isArray(v)?v.slice():(v?[v]:[]);
+  const o=S['o'+part][i];
+  if(o && o.trim()) v.push('(своё) '+o.trim());
+  return v.join(', ');
+}
+async function submit(){
+  const btn=document.getElementById('send'); btn.disabled=true; btn.textContent='Отправляю…';
+  const answers=[];
+  [1,2,3].forEach(pt=>QUIZZES[pt].forEach((q,i)=>answers.push({part:pt,q:q.q,a:fmt(i,pt)})));
+  S.comment=document.getElementById('cm').value;
+  const r=await api('/api/submit',{answers,date:S.date,dateLabel:dateLabel(),time:S.time,comment:S.comment});
+  if(r.status===200){ S.remaining=r.remaining; buzz('heavy'); done(); return; }
+  if(r.status===403) return view(msg('Попытки закончились','Обе попытки уже использованы.'));
+  btn.disabled=false; btn.textContent='Отправить Давиду 💌';
+  alert(r.status===502
+    ? 'Ответ пока не дошёл до Давида. Попытка не потрачена. Напиши ему, пусть откроет бота и нажмёт /start, и отправь ещё раз.'
+    : 'Не отправилось. Проверь интернет и нажми ещё раз.');
+}
+function done(){
+  const again = S.remaining>0 && S.remaining<99;
+  view(`<div style="padding-top:8vh"><div class="card">
+    <div class="big">💖</div>
+    <h2 class="center">Готово, Альбина</h2>
+    <p class="center">Давид получил твои ответы прямо в Telegram. Спасибо, что была честной.</p>
+    ${again?`<p class="center muted">Если передумала что-то, можно пройти ещё раз. Осталось попыток: ${S.remaining}.</p><button class="btn ghost" id="re">Пройти заново</button>`:''}
+  </div></div>`);
+  if(again) document.getElementById('re').onclick=()=>{S.a1=[];S.a2=[];S.a3=[];S.o1={};S.o2={};S.o3={};S.date=null;S.time=null;S.comment='';S.month=null;S.i=0;envelope();};
+}
+
+boot();
+</script>
+</body>
+</html>
